@@ -1,5 +1,6 @@
 // Render the real UI with sample data. No account access or network requests.
 import QtQuick
+import QtQuick.Effects
 import QtTest
 import Quickshell
 import qs.Commons
@@ -39,35 +40,22 @@ ShellRoot {
         Item {
         id: artwork
         anchors.fill: parent
-        Canvas {
-            anchors.fill: parent
-            onPaint: {
-                var c = getContext("2d"), g = c.createRadialGradient(0, height, 0, 0, height, 1050);
-                g.addColorStop(0, "#48291e"); g.addColorStop(0.48, "#1c1210"); g.addColorStop(1, "#100c0b");
-                c.fillStyle = g; c.fillRect(0, 0, width, height);
-            }
+        clip: true
+        // Omarchy's ristretto wallpaper, blurred and dimmed under real panels.
+        Image {
+            id: wallpaper
+            // Larger than the canvas, so the blur has no dark edges.
+            anchors.fill: parent; anchors.margins: -120
+            source: "file://" + Quickshell.env("TODOIST_PREVIEW_WALLPAPER")
+            fillMode: Image.PreserveAspectCrop
+            visible: false
         }
-        Text { x: 80; y: 87; text: "OMATASKS / CRMNE"; color: "#ff936f"; font.family: Style.font.family; font.pixelSize: 18; font.letterSpacing: 4 }
-        Text { x: 76; y: 164; text: "Todoist,\nright in your bar."; color: "#eee7e5"; font.family: "Inter"; font.weight: Font.Bold; font.pixelSize: 72; lineHeight: 1.08 }
-        Text { x: 80; y: 372; text: "Your day at a glance.\nYour next task, a shortcut away."; color: "#b4a6a1"; font.family: Style.font.family; font.pixelSize: 21; lineHeight: 1.5 }
-        Column {
-            x: 80; y: 508; spacing: 27
-            Repeater {
-                model: ["Today, Inbox and Upcoming", "Complete, edit and drag to reorder", "Projects, priorities, labels and reminders", "Quick Add with Alt + Space", "Your Omarchy theme, down to the details"]
-                Row {
-                    required property string modelData
-                    spacing: 14
-                    Text { text: "•"; color: "#ff936f"; font.pixelSize: 22 }
-                    Text { text: modelData; color: "#d0c4bf"; font.family: Style.font.family; font.pixelSize: 18 }
-                }
-            }
-        }
-        Rectangle { x: 80; y: 808; width: 850; height: 1; color: "#544038" }
-        Text { x: 80; y: 833; text: "OmaTasks for Todoist. Native to Omarchy."; color: "#947f75"; font.family: Style.font.family; font.pixelSize: 17 }
+        MultiEffect { anchors.fill: wallpaper; source: wallpaper; blurEnabled: true; blur: 1.0; blurMax: 48; brightness: -0.12 }
+        Rectangle { anchors.fill: parent; color: "#100c0b"; opacity: 0.55 }
         Item {
             id: panelScene
-            x: 1016; y: 52; width: 456; height: 700
-            scale: 1.1; transformOrigin: Item.TopLeft
+            x: 330; y: 70; width: 456; height: 654
+            scale: 1.15; transformOrigin: Item.TopLeft
             Row {
                 anchors.right: parent.right; anchors.rightMargin: 22
                 spacing: 7
@@ -81,7 +69,20 @@ ShellRoot {
                 border.color: Color.popups.border; border.width: 2
                 Tasks.TaskList { id: taskList; anchors.fill: parent; anchors.margins: 18; service: service }
             }
-            Text { anchors.horizontalCenter: parent.horizontalCenter; y: panel.y + panel.height + 20; text: "Today, without leaving your desktop."; color: "#947f75"; font.family: Style.font.family; font.pixelSize: 12 }
+        }
+        Rectangle {
+            id: previewCard
+            x: 790; y: 330
+            width: 460; height: previewComposer.implicitHeight + 36
+            scale: 1.2; transformOrigin: Item.TopLeft
+            color: Color.popups.background; radius: Style.cornerRadius
+            border.color: Color.popups.border; border.width: 2
+            Tasks.Composer {
+                id: previewComposer
+                x: 18; y: 18; width: parent.width - 36
+                service: service
+                text: "Plan the launch tomorrow at 10am p2 #Studio @next"
+            }
         }
         Rectangle {
             id: quickCard
@@ -117,6 +118,7 @@ ShellRoot {
             phase++;
             var dir = Quickshell.env("TODOIST_PREVIEW_OUT");
             if (phase === 1) {
+                previewComposer.closePicker();
                 artwork.grabToImage(function(result) { result.saveToFile(dir + "/preview.png"); });
                 panel.grabToImage(function(result) { result.saveToFile(dir + "/screenshots/today.png"); });
             }

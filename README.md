@@ -2,7 +2,7 @@
 
 Your Todoist day in the Omarchy bar, with a native Quick Add a shortcut away.
 
-![OmaTasks for Todoist: a compact task panel in the Omarchy bar](preview.png)
+![OmaTasks for Todoist: the Today panel and Quick Add](preview.png)
 
 **Today · Inbox · Upcoming · Quick Add · Edit · Multi-select · Drag to reorder**
 
