@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Ui as UI
 
 ColumnLayout {
     id: root
@@ -34,13 +33,15 @@ ColumnLayout {
         Label { font.family: root.fontFamily; text: "Quick add shortcut"; font.bold: true }
         RowLayout {
             Layout.fillWidth: true
-            UI.TextField { font.family: root.fontFamily;
+            KeyField { font.family: root.fontFamily;
                 id: shortcutInput
                 Layout.fillWidth: true
                 text: root.service.shortcut.value
                 placeholderText: "Disabled"
                 enabled: !root.service.shortcut.busy
                 onAccepted: root.service.shortcut.apply(text, true)
+                // Typing drops the binding; show a saved or reset shortcut again.
+                Connections { target: root.service.shortcut; function onValueChanged() { shortcutInput.text = root.service.shortcut.value; } }
             }
             Action { fontFamily: root.fontFamily; text: "Apply"; bordered: true; enabled: !root.service.shortcut.busy; onClicked: root.service.shortcut.apply(shortcutInput.text, true) }
         }

@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Ui as UI
 import "../Model.js" as Model
 
 ColumnLayout {
@@ -19,8 +18,9 @@ ColumnLayout {
         opacity: 0.7
     }
     Action { fontFamily: root.fontFamily; text: "Open Developer settings ↗"; bordered: true; onClicked: Qt.openUrlExternally(Model.TOKEN_URL) }
-    UI.TextField {
+    KeyField {
         id: tokenInput
+        objectName: "tokenInput"
         Layout.fillWidth: true
         password: true
         font.family: root.fontFamily

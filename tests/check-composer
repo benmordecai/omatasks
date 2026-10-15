@@ -7,6 +7,17 @@ ln -s "${OMARCHY_PATH:-/usr/share/omarchy}/shell/Commons" "$todoist_test_dir/Com
 ln -s "${OMARCHY_PATH:-/usr/share/omarchy}/shell/Ui" "$todoist_test_dir/Ui"
 ln -s "${TODOIST_SOURCE:-$todoist_repo}" "$todoist_test_dir/plugin"
 cp "$todoist_repo/tests/composer.qml" "$todoist_test_dir/shell.qml"
+# Never read the real clipboard. This wl-paste prints control characters and
+# more than the 4096-byte cap, then hangs past the two-second deadline.
+mkdir -p "$todoist_test_dir/bin"
+cat > "$todoist_test_dir/bin/wl-paste" <<'FAKE'
+#!/usr/bin/env bash
+printf 'Line one\nline\ttwo\a'
+head -c 6000 /dev/zero | tr '\0' 'x'
+sleep 30
+FAKE
+chmod +x "$todoist_test_dir/bin/wl-paste"
+export PATH="$todoist_test_dir/bin:$PATH"
 if [[ ${TODOIST_CAPTURE_ONLY:-0} == 1 ]]; then
   # Offscreen Qt defaults to software. Request the GPU explicitly for images.
   export QT_QUICK_BACKEND=rhi QSG_RHI_BACKEND=opengl QSG_INFO=1

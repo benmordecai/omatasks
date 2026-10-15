@@ -7,7 +7,9 @@ C.SpinBox {
     implicitWidth: Style.space(148)
     implicitHeight: Style.space(36)
     stepSize: 20
-    editable: true
+    // Not the SpinBox's own editing, which needs a Qt text input. The
+    // KeyField below takes digits and commits on Enter or focus loss.
+    editable: false
     leftPadding: down.indicator.width + Style.space(4)
     rightPadding: up.indicator.width + Style.space(4)
     topPadding: 0
@@ -15,17 +17,34 @@ C.SpinBox {
     font.family: Qt.application.font.family
     font.pixelSize: Style.font.bodySmall
 
-    contentItem: TextInput {
+    function commit(value) {
+        var number = parseInt(value, 10);
+        if (!isNaN(number)) {
+            number = Math.max(from, Math.min(to, number));
+            if (number !== root.value) {
+                // Step there, as the buttons do: assigning value would drop
+                // the caller's binding to the saved size.
+                var step = stepSize;
+                stepSize = Math.abs(number - root.value);
+                if (number > root.value) increase(); else decrease();
+                stepSize = step;
+                root.valueModified();
+            }
+        }
+        field.text = Qt.binding(function() { return root.displayText; });
+    }
+
+    contentItem: KeyField {
+        id: field
+        objectName: "sizeField"
+        framed: false
         text: root.displayText
         font: root.font
-        color: Color.popups.text
-        selectionColor: Color.accent
-        selectedTextColor: Color.popups.background
-        horizontalAlignment: Qt.AlignHCenter
-        verticalAlignment: Qt.AlignVCenter
-        readOnly: !root.editable
-        validator: root.validator
-        inputMethodHints: Qt.ImhDigitsOnly
+        foreground: Color.popups.text
+        horizontalAlignment: Text.AlignHCenter
+        maximumLength: 5
+        validator: function(value) { return /^\d*$/.test(value); }
+        onEditingFinished: root.commit(text)
     }
     background: Rectangle {
         color: "transparent"

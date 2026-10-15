@@ -58,6 +58,8 @@ ColumnLayout {
     readonly property string shownDate: typedDate ? /^no (?:due )?date$/i.test(typedDate.value) ? "" : typedDate.value : due
     readonly property bool dark: Color.popups.background.r * 0.299 + Color.popups.background.g * 0.587 + Color.popups.background.b * 0.114 < 0.5
     onParsedChanged: Qt.callLater(updateHighlights)
+    // A field's own edits drop its binding, so later changes are copied in.
+    onDurationChanged: if (durationField.text !== duration) durationField.text = duration
     signal finished()
     signal cancelled()
     spacing: Style.space(10)
@@ -114,7 +116,7 @@ ColumnLayout {
         Qt.callLater(function() { search.forceActiveFocus(); });
     }
     function updateToken() {
-        if (editing || editingToken || input.inputMethodComposing || !input.activeFocus) return;
+        if (editing || editingToken || !input.activeFocus) return;
         var token = Draft.tokenAt(input.text, input.cursorPosition);
         // A complete shortcut is already reflected in the chips. Keep it in
         // the title, with a highlight, and stop offering autocomplete for it.
@@ -236,31 +238,26 @@ ColumnLayout {
     }
 
     FontMetrics { id: metrics; font: input.font }
-    C.TextArea {
+    KeyField {
         id: input
         objectName: "taskName"
         Layout.fillWidth: true
         implicitHeight: Math.max(Style.space(30), contentHeight)
-        wrapMode: TextEdit.Wrap
-        textFormat: TextEdit.PlainText
-        padding: 0; color: Color.popups.text
+        multiline: true; framed: false
+        foreground: Color.popups.text
         font.family: root.fontFamily; font.pixelSize: Style.font.body; font.bold: true
         placeholderText: "Task name"; placeholderTextColor: Qt.rgba(Color.popups.text.r, Color.popups.text.g, Color.popups.text.b, 0.4)
-        selectionColor: Color.accent; selectedTextColor: Color.popups.background
-        // Keep a plain TextArea for cursor movement, selection, undo, paste
-        // and input methods. Only the recognized spans' backgrounds are drawn.
-        background: Item {
-            clip: true
-            Repeater {
-                model: root.highlightSpans
-                Rectangle {
-                    required property var modelData
-                    objectName: "highlight_" + modelData.kind
-                    x: modelData.x; y: modelData.y
-                    width: modelData.width; height: modelData.height
-                    radius: 2
-                    color: root.highlightColor(modelData)
-                }
+        // Only the recognized spans' backgrounds are drawn, under the text.
+        Repeater {
+            model: root.highlightSpans
+            Rectangle {
+                required property var modelData
+                objectName: "highlight_" + modelData.kind
+                z: -1
+                x: modelData.x; y: modelData.y
+                width: modelData.width; height: modelData.height
+                radius: 2
+                color: root.highlightColor(modelData)
             }
         }
         enabled: !root.submitting
@@ -269,29 +266,37 @@ ColumnLayout {
         onContentHeightChanged: Qt.callLater(root.updateHighlights)
         onWidthChanged: Qt.callLater(root.updateHighlights)
         onFontChanged: Qt.callLater(root.updateHighlights)
-        Keys.onPressed: function(event) {
+        // Shift+Enter falls through to the field and starts a new line.
+        onKeyPressed: function(event) {
             root.handleKey(event);
             if (!event.accepted && !(event.modifiers & Qt.ShiftModifier) && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) { root.submit(); event.accepted = true; }
         }
     }
     C.ScrollView {
+        id: descriptionScroll
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(Style.space(90), Math.max(Style.space(28), description.implicitHeight))
         visible: root.descriptionVisible || description.text !== ""
         clip: true
         contentWidth: availableWidth
         C.ScrollBar.horizontal.policy: C.ScrollBar.AlwaysOff
-        C.TextArea {
+        KeyField {
             id: description
             width: parent.width
             objectName: "taskDescription"
-            padding: 0; wrapMode: TextEdit.Wrap
-            color: Color.popups.text
+            multiline: true; framed: false
+            foreground: Color.popups.text
             font.family: root.fontFamily; font.pixelSize: Style.font.bodySmall
             placeholderText: "Description"; placeholderTextColor: Qt.rgba(Color.popups.text.r, Color.popups.text.g, Color.popups.text.b, 0.4)
-            background: Item {}
             enabled: !root.submitting
-            Keys.onPressed: function(event) {
+            // Keep the caret in view as it moves past the visible lines.
+            onCursorRectangleChanged: {
+                var view = descriptionScroll.contentItem, r = cursorRectangle;
+                if (!view || !activeFocus) return;
+                if (r.y < view.contentY) view.contentY = r.y;
+                else if (r.y + r.height > view.contentY + view.height) view.contentY = r.y + r.height - view.height;
+            }
+            onKeyPressed: function(event) {
                 root.handleKey(event);
                 if ((event.modifiers & Qt.ControlModifier) && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) { root.submit(); event.accepted = true; }
             }
@@ -333,7 +338,7 @@ ColumnLayout {
         RowLayout {
             Layout.fillWidth: true
             Label { font.family: root.fontFamily; text: "Duration"; Layout.fillWidth: true }
-            UI.TextField { font.family: root.fontFamily; objectName: "taskDuration"; Layout.preferredWidth: Style.space(60); text: root.duration; validator: IntValidator { bottom: 0; top: 100000 } onTextEdited: root.duration = text; enabled: !root.submitting }
+            KeyField { id: durationField; font.family: root.fontFamily; objectName: "taskDuration"; Layout.preferredWidth: Style.space(60); text: root.duration; maximumLength: 6; validator: function(value) { return /^\d*$/.test(value) && Number(value) <= 100000; } onTextEdited: root.duration = text; enabled: !root.submitting }
             UI.Dropdown { fontFamily: root.fontFamily; Layout.preferredWidth: Style.space(95); showLabel: false; value: root.durationUnit; options: [{value: "minute", label: "Minutes"}, {value: "day", label: "Days"}]; onChanged: function(value) { root.durationUnit = value; } enabled: !root.submitting }
         }
         Label { font.family: root.fontFamily; text: "0 = no duration"; opacity: 0.45; font.pixelSize: Style.font.caption }
@@ -358,14 +363,14 @@ ColumnLayout {
                 Label { font.family: root.fontFamily; Layout.fillWidth: true; text: ({project: "Project", label: "Labels", section: "Section", priority: "Priority", due: "Date", deadline: "Deadline", reminder: "Reminder", assignee: "Assignee"})[root.pickerKind] || ""; font.bold: true; font.pixelSize: Style.font.bodySmall }
                 Action { fontFamily: root.fontFamily; iconName: "close"; iconSize: Style.space(12); tip: "Close picker"; onClicked: { root.closePicker(); root.focusInput(); } }
             }
-            UI.TextField { font.family: root.fontFamily;
+            KeyField { font.family: root.fontFamily;
                 id: search
                 objectName: "pickerSearch"
                 visible: !root.activeToken
                 Layout.fillWidth: true
                 placeholderText: root.editing && root.pickerKind === "deadline" ? "YYYY-MM-DD" : ["due", "deadline", "reminder"].indexOf(root.pickerKind) >= 0 ? "e.g. tomorrow at 4pm" : "Search…"
                 onTextEdited: root.choiceIndex = 0
-                Keys.onPressed: event => root.handleKey(event)
+                onKeyPressed: event => root.handleKey(event)
             }
             ListView {
                 id: suggestions

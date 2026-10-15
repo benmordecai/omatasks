@@ -45,6 +45,13 @@ ShellRoot {
             Tasks.Settings { id: settings; visible: false; x: 18; y: 18; width: parent.width - 36; service: service }
         }
         Tasks.TaskList { id: inlineList; visible: false; anchors.fill: parent; anchors.margins: 18; service: service }
+        Column {
+            visible: false
+            x: 18; y: 18; width: 300; spacing: 8
+            Tasks.KeyField { id: plainField; width: parent.width; property int acceptedCount: 0; onAccepted: acceptedCount++ }
+            Tasks.KeyField { id: secretField; width: parent.width; password: true }
+            Tasks.SizeControl { id: sizeControl; property int saved: 400; property int modified: 0; value: saved; from: 360; to: 1000; onValueModified: { modified++; saved = value; } }
+        }
     }
     TestCase {
         id: checks
@@ -168,6 +175,63 @@ ShellRoot {
         function test_escape_dismisses_picker_before_cancelling() {
             enter("Review #Stu"); keyClick(Qt.Key_Escape); compare(composer.pickerKind, ""); compare(composer.text, "Review #Stu");
         }
+        function type(text) { for (var i = 0; i < text.length; i++) keyClick(text[i]); }
+        function test_key_field_edits_from_keys() {
+            plainField.text = ""; plainField.acceptedCount = 0; plainField.parent.visible = true; plainField.forceActiveFocus();
+            type("hello world"); compare(plainField.text, "hello world"); compare(plainField.cursorPosition, 11);
+            for (var i = 0; i < 5; i++) keyClick(Qt.Key_Left);
+            type("big "); compare(plainField.text, "hello big world");
+            keyClick(Qt.Key_Backspace, Qt.ControlModifier); compare(plainField.text, "hello world"); compare(plainField.cursorPosition, 6);
+            keyClick(Qt.Key_Home); compare(plainField.cursorPosition, 0); keyClick(Qt.Key_Delete); compare(plainField.text, "ello world");
+            keyClick(Qt.Key_End); keyClick(Qt.Key_Backspace); compare(plainField.text, "ello worl");
+            keyClick(Qt.Key_Z, Qt.ControlModifier); compare(plainField.text, "ello world");
+            keyClick(Qt.Key_A, Qt.ControlModifier); compare(plainField.selectedText, "ello world"); type("x"); compare(plainField.text, "x");
+            keyClick(Qt.Key_U, Qt.ControlModifier); compare(plainField.text, "");
+            keyClick(Qt.Key_Return); compare(plainField.acceptedCount, 1);
+            keyClick(Qt.Key_V); compare(plainField.text, "v", "Plain V types a letter");
+            plainField.parent.visible = false;
+        }
+        function test_password_field_draws_bullets() {
+            secretField.text = "secret"; compare(secretField.shown, "\u2022\u2022\u2022\u2022\u2022\u2022");
+            compare(secretField.text, "secret");
+        }
+        function test_paste_reads_clipboard_only_on_request_bounded_and_clean() {
+            // check-composer puts a fake wl-paste first in PATH: it prints a
+            // line with control characters and 6000 more bytes, then hangs.
+            plainField.text = "A "; plainField.parent.visible = true; plainField.forceActiveFocus();
+            verify(!plainField.pasting);
+            var started = Date.now();
+            keyClick(Qt.Key_V, Qt.ControlModifier); verify(plainField.pasting);
+            tryVerify(function() { return !plainField.pasting; }, 6000);
+            verify(Date.now() - started < 4000, "the read stops at its deadline");
+            verify(plainField.text.indexOf("A Line one line two") === 0, plainField.text.slice(0, 40));
+            verify(plainField.text.length <= 2 + 4096); verify(!/[\u0000-\u001f]/.test(plainField.text));
+            plainField.parent.visible = false;
+        }
+        function test_task_name_keeps_shift_enter_newline_and_enter_submits() {
+            enter("Review"); keyClick(Qt.Key_Return, Qt.ShiftModifier);
+            compare(composer.text, "Review\n"); compare(service.captured.length, 0);
+            type("notes"); keyClick(Qt.Key_Return); compare(service.captured.length, 1); compare(service.captured[0].text, "Review\nnotes");
+        }
+        function test_size_control_commits_typed_value_and_keeps_binding() {
+            sizeControl.parent.visible = true; sizeControl.saved = 400; sizeControl.modified = 0;
+            var field = findChild(sizeControl, "sizeField"); field.forceActiveFocus();
+            keyClick(Qt.Key_A, Qt.ControlModifier); type("5x00"); compare(field.text, "500");
+            keyClick(Qt.Key_Return); compare(sizeControl.value, 500); compare(sizeControl.modified, 1); compare(field.text, "500");
+            sizeControl.saved = 700; compare(sizeControl.value, 700, "value still follows the saved size"); compare(field.text, "700");
+            keyClick(Qt.Key_A, Qt.ControlModifier); type("5000"); keyClick(Qt.Key_Return); compare(sizeControl.value, 1000);
+            sizeControl.parent.visible = false;
+        }
+        function test_no_qt_text_input_is_instantiated() {
+            var found = [];
+            function walk(item) {
+                var name = String(item);
+                if (/^(QQuickTextInput|QQuickTextEdit|QQuickTextField|QQuickTextArea|TextField|TextArea)/.test(name)) found.push(name);
+                for (var i = 0; i < item.children.length; i++) walk(item.children[i]);
+            }
+            walk(window.contentItem);
+            compare(found.length, 0, found.join(", "));
+        }
         function test_existing_task_title_is_not_reinterpreted() {
             composer.editingTask = {id: "task", content: "Discuss tomorrow p1", project_id: "inbox", priority: 1, labels: []};
             composer.loadTask(); compare(composer.parsed.tokens.length, 0); compare(composer.shownPriority, 4);
@@ -182,8 +246,14 @@ ShellRoot {
         property var scenes: [
             {theme: "dark", width: 360, settings: false}, {theme: "light", width: 360, settings: false},
             {theme: "dark", width: 560, settings: false}, {theme: "light", width: 560, settings: false},
-            {theme: "dark", width: 420, settings: true}, {theme: "light", width: 420, settings: true}
+            {theme: "dark", width: 420, settings: true}, {theme: "light", width: 420, settings: true},
+            {theme: "dark", width: 420, settings: true, token: true}, {theme: "light", width: 420, settings: true, token: true}
         ]
+        function named(item, name) {
+            if (item.objectName === name) return item;
+            for (var i = 0; i < item.children.length; i++) { var found = named(item.children[i], name); if (found) return found; }
+            return null;
+        }
         onTriggered: {
             var scene = scenes[Math.floor(phase / 2)];
             if (!scene) { Qt.quit(); return; }
@@ -200,8 +270,9 @@ ShellRoot {
                 composer.reset(); composer.visible = !scene.settings; settings.visible = scene.settings;
                 composer.text = "Review tomorrow at 4pm !!1 #Studio /Website @next !30m {Friday}";
                 composer.focusInput();
+                if (scene.token) { var token = named(settings, "tokenInput"); token.text = "0123456789abcdef0123"; token.forceActiveFocus(); }
             } else {
-                var path = Quickshell.env("TODOIST_CAPTURE_DIR") + "/" + Quickshell.env("TODOIST_CAPTURE_STAGE") + "-" + (scene.settings ? "settings" : "composer") + "-" + scene.width + "-" + scene.theme + ".png";
+                var path = Quickshell.env("TODOIST_CAPTURE_DIR") + "/" + Quickshell.env("TODOIST_CAPTURE_STAGE") + "-" + (scene.token ? "token" : scene.settings ? "settings" : "composer") + "-" + scene.width + "-" + scene.theme + ".png";
                 card.grabToImage(function(result) { result.saveToFile(path); });
             }
             phase++;

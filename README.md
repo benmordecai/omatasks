@@ -25,8 +25,9 @@ omarchy plugin add https://github.com/crmne/omatasks.git --enable
 - A Todoist account and its personal API token.
 
 No extra packages or Todoist CLI are required. The runtime uses QML's HTTPS
-client; Hyprland manages the shortcut, and standard shell utilities save your
-local settings. Node.js is only used for development tests.
+client; Hyprland manages the shortcut, standard shell utilities save your
+local settings, and `wl-paste` (wl-clipboard, included in Omarchy) reads the
+clipboard when you paste. Node.js is only used for development tests.
 
 ## Connect
 
@@ -34,13 +35,35 @@ Click the **Todoist icon** in the bar. Setup appears **inside that panel**:
 
 1. Open Todoist → **Settings → Integrations → Developer**.
 2. Copy your API token. The panel links directly to [Developer settings](https://app.todoist.com/app/settings/integrations/developer).
-3. Paste the token into the password field and select **Connect**.
+3. Paste the token into the password field with **Ctrl+V** and select **Connect**.
 
 The token is validated before being saved. It lives in `$XDG_CONFIG_HOME/omarchy-todoist/token` (normally `~/.config/omarchy-todoist/token`) with mode `0600`, inside a `0700` directory. It is sent to the credential writer through stdin and to Todoist through an HTTPS authorization header. It is never stored in `shell.json`, command arguments, or this repository. Display preferences are stored in `views.json` beside it. Task data stays in memory.
 
 Temporary sync failures retry automatically after 5 seconds, with increasing delays up to five minutes. Cached tasks stay visible and your account stays connected. Use **Retry now** in the error banner to try immediately; Todoist rate limits still apply. Failed task changes retain their existing explicit retry behavior.
 
 The settings button opens panel size, account, and shortcut settings inside the panel. Disconnect clears the saved token and account data.
+
+### Text fields and the clipboard
+
+The task name, description, search, date, duration, panel size, token, and
+shortcut fields are drawn by the plugin from key events rather than by Qt's
+text inputs. An editable Qt text input reads the clipboard every time another
+application changes it, even when you never paste, so OmaTasks uses none.
+
+- Type, move with **←/→** (**Ctrl** for words), **Home/End**, and **↑/↓**
+  between lines of the task name and description. **Shift** with these extends
+  a selection.
+- **Backspace** and **Delete** remove a character, or a word with **Ctrl**.
+  **Ctrl+A** selects everything, so typing replaces it. **Ctrl+U** clears the
+  field, **Ctrl+Z** undoes, and **Ctrl+C/X** copy and cut a selection (not in
+  the token field). Click to place the caret.
+- **Ctrl+V** or **Shift+Insert** pastes. Only then is the clipboard read, by
+  `wl-paste` in a separate process, stopped after two seconds and 4096 bytes.
+  Control characters are removed, and line breaks become spaces in
+  single-line fields.
+- Dead keys, compose sequences, and input methods (IME) are not supported in
+  these fields. Keys that type a character directly work, including accented
+  letters on keyboard layouts that have them.
 
 Task lists, both task editors, menus, and settings use the desktop's native UI
 font (for example, Adwaita Sans). They use proportional text independently of
@@ -140,7 +163,7 @@ node --test tests/*.test.cjs
 omarchy plugin validate .
 ```
 
-Tests cover task selection, Smart/manual order, nested groups, time zones, incremental sync, request cancellation, recurring completion, retry IDs, and error handling. Reorder tests cover filtered tasks, duplicate label groups, sibling boundaries, fractional keys, batching, rollback, and retries. Quick Add tests cover token boundaries, scoped pickers, escaped names, description serialization, and date precedence. Edit tests cover preserving recurring schedules, optional-field removal, project moves, deadline validation, reminder syntax, partial Sync failures, and retries. The service tests run its JavaScript methods with controlled HTTP responses; they do not modify a Todoist account. UI and credential-file behavior are checked in Quickshell.
+Tests cover task selection, Smart/manual order, nested groups, time zones, incremental sync, request cancellation, recurring completion, retry IDs, and error handling. Reorder tests cover filtered tasks, duplicate label groups, sibling boundaries, fractional keys, batching, rollback, and retries. Text field tests cover editing, word deletion, selection, line wrapping, surrogate pairs, and clipboard cleaning, and fail if any QML file uses a Qt text input or reads the clipboard outside an explicit paste. Quick Add tests cover token boundaries, scoped pickers, escaped names, description serialization, and date precedence. Edit tests cover preserving recurring schedules, optional-field removal, project moves, deadline validation, reminder syntax, partial Sync failures, and retries. The service tests run its JavaScript methods with controlled HTTP responses; they do not modify a Todoist account. UI and credential-file behavior are checked in Quickshell.
 
 Implementation follows the [Todoist API v1 documentation](https://developer.todoist.com/api/v1/): form-encoded incremental Sync, JSON Quick Add, and the task close endpoint. The app's display preferences are local to this plugin.
 
@@ -150,8 +173,11 @@ Implementation follows the [Todoist API v1 documentation](https://developer.todo
 
 `check-composer` tests both entry points, keyboard autocomplete, typed and pasted
 metadata, chip changes, description boundaries, contextual defaults, title
-wrapping, highlight placement, and proportional UI fonts with intercepted
-submissions. It never accesses a Todoist account. Capture before/after visual
+wrapping, highlight placement, proportional UI fonts, text field keys, the
+password field, the panel size field, and that no Qt text input is
+instantiated, with intercepted submissions. Paste runs against a stand-in
+`wl-paste` that sends too much and never finishes, so the test checks both
+limits and never reads your clipboard. It never accesses a Todoist account. Capture before/after visual
 evidence at 360 and 560px, plus
 settings at 420px, in light and dark themes with:
 

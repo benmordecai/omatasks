@@ -3,7 +3,6 @@ import QtQuick.Controls as C
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
-import qs.Ui as UI
 import "../Model.js" as Model
 
 C.Popup {
@@ -126,7 +125,7 @@ C.Popup {
                 enabled: !root.busy
                 Layout.fillWidth: true
                 Label { font.family: root.fontFamily; text: root.page === "customDate" ? "Date or recurrence" : root.page === "deadline" ? "Deadline" : "Add reminder"; font.bold: true }
-                UI.TextField { font.family: root.fontFamily;
+                KeyField { font.family: root.fontFamily;
                     id: input
                     objectName: "bulkDateInput"
                     Layout.fillWidth: true
@@ -141,7 +140,7 @@ C.Popup {
                 enabled: !root.busy
                 Layout.fillWidth: true
                 Label { font.family: root.fontFamily; text: "Move to project or section"; font.bold: true }
-                UI.TextField { font.family: root.fontFamily; id: search; Layout.fillWidth: true; placeholderText: "Find a project or section…" }
+                KeyField { font.family: root.fontFamily; id: search; Layout.fillWidth: true; placeholderText: "Find a project or section…" }
                 Repeater {
                     model: {
                         var destinations = [];
