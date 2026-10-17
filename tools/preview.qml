@@ -35,13 +35,16 @@ ShellRoot {
     FloatingWindow {
         id: window
         visible: true
-        implicitWidth: 1600; implicitHeight: 900
+        implicitWidth: 1280; implicitHeight: 800
         color: "#100c0b"
         Item {
         id: artwork
         anchors.fill: parent
         clip: true
         // Omarchy's ristretto wallpaper, blurred and dimmed under real panels.
+        // The marketplace card shows only a wide strip from the vertical
+        // middle, so the panels are large, with Quick Add and the first tasks
+        // in that strip.
         Image {
             id: wallpaper
             // Larger than the canvas, so the blur has no dark edges.
@@ -54,8 +57,8 @@ ShellRoot {
         Rectangle { anchors.fill: parent; color: "#100c0b"; opacity: 0.55 }
         Item {
             id: panelScene
-            x: 330; y: 70; width: 456; height: 654
-            scale: 1.15; transformOrigin: Item.TopLeft
+            x: 40; y: 108; width: 456; height: 654
+            scale: 1.45; transformOrigin: Item.TopLeft
             Row {
                 anchors.right: parent.right; anchors.rightMargin: 22
                 spacing: 7
@@ -72,9 +75,9 @@ ShellRoot {
         }
         Rectangle {
             id: previewCard
-            x: 790; y: 330
+            x: 540; y: 262
             width: 460; height: previewComposer.implicitHeight + 36
-            scale: 1.2; transformOrigin: Item.TopLeft
+            scale: 1.6; transformOrigin: Item.TopLeft
             color: Color.popups.background; radius: Style.cornerRadius
             border.color: Color.popups.border; border.width: 2
             Tasks.Composer {
