@@ -29,6 +29,9 @@ function service() {
     vm.runInContext(fs.readFileSync('ui/BulkModel.js', 'utf8').replace(/^\.import.*$/gm, ''), Bulk);
     const ctx = vm.createContext({ Order, preferences: {}, now: new Date(2026, 8, 15, 12), pendingReorder: null, reorderCache: {}, settingsFile: { setText() {} }, Model, XMLHttpRequest: XHR, Date, requests: [], completionIds: {}, generation: 0, token: 'test-token', configured: true, loading: false, saving: false, connecting: false, storageReady: true, error: '', retryAfter: 0, nextSyncRetry: 0, syncFailures: 0, syncToken: '*', tasks: [], projects: [], sections: [], labels: [], collaborators: [], reminders: [], completedInfo: [], user: {}, lastSync: 0, taskAdded() { ctx.added = true; }, taskUpdated(id) { ctx.updated = id; }, taskCompleted(id) { ctx.completed = id; }, operationFailed(message) { ctx.failed = message; } });
     ctx.root = ctx;
+    const Bar = vm.createContext({ Model, Date });
+    vm.runInContext(fs.readFileSync('ui/BarModel.js', 'utf8').replace(/^\.import.*$/gm, ''), Bar);
+    ctx.Bar = Bar;
     const Notify = vm.createContext({ Model, Date });
     vm.runInContext(fs.readFileSync('ui/NotifyModel.js', 'utf8').replace(/^\.import.*$/gm, ''), Notify);
     ctx.sent = [];
@@ -376,4 +379,11 @@ test('Notification settings are saved with the view preferences', () => {
     assert.equal(s.setNotification('unknown', true), false);
     assert.equal(s.setNotification('overdueHours', 2), true);
     assert.equal(s.Notify.settings(s.preferences).overdueHours, 2);
+});
+test('The bar mode is saved with the view preferences and rejects unknown modes', () => {
+    const {s} = service();
+    s.setBarMode('next');
+    assert.equal(s.preferences.barTask, 'next');
+    s.setBarMode('everything');
+    assert.equal(s.preferences.barTask, 'next');
 });

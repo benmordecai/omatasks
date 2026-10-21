@@ -7,6 +7,7 @@ import "Model.js" as Model
 import "ui/OrderModel.js" as Order
 import "ui/BulkModel.js" as Bulk
 import "ui/NotifyModel.js" as Notify
+import "ui/BarModel.js" as Bar
 
 Item {
     id: root
@@ -48,6 +49,9 @@ Item {
     property real startedAt: Date.now()
     property var shownAlerts: ({})
     property var snoozed: ({})
+    readonly property string barMode: Bar.mode(preferences.barTask)
+    readonly property var barTasks: loaded ? Bar.selection(barMode, tasks, user.id, now.getTime()) : []
+    readonly property string barText: Bar.label(barTasks, now.getTime())
     readonly property var notifySettings: Notify.settings(preferences)
     readonly property bool notifying: enableNotifications && configured && notifySettings.enabled
     readonly property string notifierPath: decodeURIComponent(Qt.resolvedUrl("Notifier.py").toString().replace(/^file:\/\//, ""))
@@ -93,6 +97,11 @@ Item {
     }
     function saveShortcut(value) {
         preferences = Object.assign({}, preferences, {quickAddShortcut: value});
+        if (storageReady) settingsFile.setText(JSON.stringify(preferences));
+    }
+    function setBarMode(value) {
+        if (Bar.MODES.indexOf(value) < 0) return;
+        preferences = Object.assign({}, preferences, {barTask: value});
         if (storageReady) settingsFile.setText(JSON.stringify(preferences));
     }
     function setNotification(key, value) {

@@ -2,6 +2,7 @@ import QtQuick
 import qs.Commons
 import qs.Ui
 import "ui" as Tasks
+import "ui/BarModel.js" as Bar
 
 Panel {
     id: root
@@ -23,7 +24,8 @@ Panel {
         hasVisualContent: true
         fixedWidth: vertical ? barSize : readout.implicitWidth + scaledHorizontalMargin * 2
         fixedHeight: vertical ? readout.implicitHeight + scaledVerticalPadding * 2 : barSize
-        tooltipText: root.service && root.service.error ? root.service.error : "Todoist · Today\nRight-click: quick add"
+        tooltipText: !root.service ? "" : root.service.error ? root.service.error
+            : (root.service.barTasks.length ? Bar.tooltip(root.service.barTasks, root.service.now.getTime()) + "\n\n" : "") + "Todoist · Today\nRight-click: quick add"
         onPressed: function(mouseButton) {
             if (mouseButton === Qt.RightButton && root.bar && root.bar.shell) { root.close(); root.bar.shell.summon(root.moduleName, "{}"); }
             else if (mouseButton === Qt.MiddleButton && root.service) root.service.refresh();
@@ -36,8 +38,10 @@ Panel {
             spacing: Style.space(5)
             Tasks.TodoistIcon { color: button.foreground; width: Style.space(14); height: width }
             Text {
-                visible: root.service && root.service.loaded
-                text: root.service ? root.service.todayCount : ""
+                objectName: "barReadout"
+                visible: root.service && root.service.loaded && root.service.barMode !== "icon"
+                // A vertical bar has no room for a task name.
+                text: !root.service ? "" : root.service.barText !== "" && !button.vertical ? root.service.barText : root.service.todayCount
                 font.family: button.fontFamily; font.pixelSize: button.fontSize
                 color: button.foreground
             }
