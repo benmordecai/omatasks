@@ -105,7 +105,7 @@ Item {
             visible: text !== ""
             width: parent.width
             text: Model.plain(root.task.description)
-            font.pixelSize: Style.font.bodySmall
+            font.pixelSize: Style.font.body
             opacity: 0.6
         }
         Item {
@@ -120,7 +120,7 @@ Item {
                 clip: true
                 Repeater {
                     model: root.metadata
-                    Label { font.family: root.fontFamily; required property var modelData; text: modelData.text; color: modelData.color; font.pixelSize: Style.font.caption; anchors.verticalCenter: parent.verticalCenter }
+                    Label { font.family: root.fontFamily; required property var modelData; text: modelData.text; color: modelData.color; font.pixelSize: Style.font.bodySmall; anchors.verticalCenter: parent.verticalCenter }
                 }
             }
             Label { font.family: root.fontFamily;
@@ -129,7 +129,7 @@ Item {
                 width: Math.min(implicitWidth, parent.width * (root.metadata.length ? 0.4 : 0.85))
                 text: root.projectText + "  #"
                 horizontalAlignment: Text.AlignRight
-                font.pixelSize: Style.font.caption
+                font.pixelSize: Style.font.bodySmall
                 opacity: 0.55
             }
         }

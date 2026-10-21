@@ -37,6 +37,6 @@ ColumnLayout {
         }
         Action { fontFamily: root.fontFamily; visible: root.service.configured; text: "Disconnect"; enabled: !root.service.connecting && !root.service.saving; onClicked: root.service.disconnect() }
     }
-    Label { font.family: root.fontFamily; Layout.fillWidth: true; text: "Your token stays on this computer."; opacity: 0.45; font.pixelSize: Style.font.caption }
+    Label { font.family: root.fontFamily; Layout.fillWidth: true; text: "Your token stays on this computer."; opacity: 0.45; font.pixelSize: Style.font.bodySmall }
     Connections { target: root.service; function onConnected() { tokenInput.text = ""; } }
 }

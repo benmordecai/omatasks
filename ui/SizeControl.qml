@@ -15,7 +15,7 @@ C.SpinBox {
     topPadding: 0
     bottomPadding: 0
     font.family: Qt.application.font.family
-    font.pixelSize: Style.font.bodySmall
+    font.pixelSize: Style.font.body
 
     function commit(value) {
         var number = parseInt(value, 10);

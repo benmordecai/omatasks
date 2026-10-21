@@ -32,7 +32,7 @@ C.AbstractButton {
             spacing: Style.space(6)
             opacity: root.enabled ? (root.selected || root.hovered ? 1 : 0.75) : 0.35
             ViewIcon { visible: root.iconName !== ""; name: root.iconName; day: root.iconDay; color: root.foreground; width: root.iconSize; height: width; anchors.verticalCenter: parent.verticalCenter }
-            Label { font.family: root.fontFamily; id: caption; visible: text !== ""; width: Math.min(implicitWidth, Math.max(0, root.width - Style.space(20) - (root.iconName ? root.iconSize + contents.spacing : 0))); text: root.text; color: root.foreground; font.bold: root.bold; font.pixelSize: Style.font.bodySmall; anchors.verticalCenter: parent.verticalCenter }
+            Label { font.family: root.fontFamily; id: caption; visible: text !== ""; width: Math.min(implicitWidth, Math.max(0, root.width - Style.space(20) - (root.iconName ? root.iconSize + contents.spacing : 0))); text: root.text; color: root.foreground; font.bold: root.bold; font.pixelSize: Style.font.body; anchors.verticalCenter: parent.verticalCenter }
         }
     }
     background: Rectangle {

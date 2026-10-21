@@ -70,8 +70,8 @@ Item {
                         required property var modelData
                         Layout.fillWidth: true; Layout.minimumWidth: 0
                         spacing: Style.space(10)
-                        Label { font.family: root.fontFamily; Layout.preferredWidth: Style.space(70); Layout.alignment: Qt.AlignTop; text: modelData.name; opacity: 0.5; font.pixelSize: Style.font.bodySmall }
-                        Label { font.family: root.fontFamily; Layout.fillWidth: true; Layout.minimumWidth: 0; text: modelData.value; color: modelData.color || Color.popups.text; wrapMode: Text.Wrap; elide: Text.ElideNone; font.pixelSize: Style.font.bodySmall }
+                        Label { font.family: root.fontFamily; Layout.preferredWidth: Style.space(70); Layout.alignment: Qt.AlignTop; text: modelData.name; opacity: 0.5; font.pixelSize: Style.font.body }
+                        Label { font.family: root.fontFamily; Layout.fillWidth: true; Layout.minimumWidth: 0; text: modelData.value; color: modelData.color || Color.popups.text; wrapMode: Text.Wrap; elide: Text.ElideNone; font.pixelSize: Style.font.body }
                     }
                 }
                 Repeater {
@@ -80,8 +80,8 @@ Item {
                         required property var modelData
                         Layout.fillWidth: true; Layout.minimumWidth: 0
                         spacing: Style.space(10)
-                        Label { font.family: root.fontFamily; Layout.preferredWidth: Style.space(70); Layout.alignment: Qt.AlignTop; text: "Reminder"; opacity: 0.5; font.pixelSize: Style.font.bodySmall }
-                        Label { font.family: root.fontFamily; Layout.fillWidth: true; Layout.minimumWidth: 0; text: Edit.reminderText(modelData); wrapMode: Text.Wrap; elide: Text.ElideNone; font.pixelSize: Style.font.bodySmall }
+                        Label { font.family: root.fontFamily; Layout.preferredWidth: Style.space(70); Layout.alignment: Qt.AlignTop; text: "Reminder"; opacity: 0.5; font.pixelSize: Style.font.body }
+                        Label { font.family: root.fontFamily; Layout.fillWidth: true; Layout.minimumWidth: 0; text: Edit.reminderText(modelData); wrapMode: Text.Wrap; elide: Text.ElideNone; font.pixelSize: Style.font.body }
                     }
                 }
                 Action { fontFamily: root.fontFamily; visible: root.parentTask !== null; text: "↑ " + Model.plain((root.parentTask || {}).content); maximumWidth: root.width; tip: "Parent task"; onClicked: root.taskRequested(root.parentTask) }
@@ -91,7 +91,7 @@ Item {
                     TaskRow { required property var modelData; Layout.fillWidth: true; Layout.minimumWidth: 0; task: modelData; service: root.service; view: "details"; onActivated: function(task) { root.taskRequested(task); } }
                 }
                 Action { fontFamily: root.fontFamily; visible: Number(root.task.note_count || root.task.comment_count || 0) > 0; text: (root.task.note_count || root.task.comment_count || 0) + " comments · Open in Todoist ↗"; maximumWidth: root.width; onClicked: Qt.openUrlExternally("https://app.todoist.com/app/task/" + encodeURIComponent(root.task.id)) }
-                Label { font.family: root.fontFamily; visible: !!root.task.added_at; Layout.fillWidth: true; Layout.minimumWidth: 0; text: root.task.added_at ? "Added " + Qt.formatDateTime(new Date(root.task.added_at), "d MMM yyyy, HH:mm") : ""; opacity: 0.4; font.pixelSize: Style.font.caption; wrapMode: Text.Wrap; elide: Text.ElideNone }
+                Label { font.family: root.fontFamily; visible: !!root.task.added_at; Layout.fillWidth: true; Layout.minimumWidth: 0; text: root.task.added_at ? "Added " + Qt.formatDateTime(new Date(root.task.added_at), "d MMM yyyy, HH:mm") : ""; opacity: 0.4; font.pixelSize: Style.font.bodySmall; wrapMode: Text.Wrap; elide: Text.ElideNone }
             }
             Loader {
                 id: editor

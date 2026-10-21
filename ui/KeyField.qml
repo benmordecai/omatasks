@@ -175,7 +175,7 @@ Item {
         if (root.handle(event)) { event.accepted = true; blink.on = true; blink.restart(); }
     }
 
-    FontMetrics { id: metrics; font.family: Style.font.family; font.pixelSize: Style.font.body }
+    FontMetrics { id: metrics; font.family: Style.font.family; font.pixelSize: Style.font.subtitle }
 
     UI.BorderSurface {
         visible: root.framed

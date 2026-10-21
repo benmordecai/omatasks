@@ -156,7 +156,7 @@ FocusScope {
             text: root.service.error || (!root.service.loaded && root.service.configured ? "Loading tasks…" : "")
             color: root.service.error ? Color.urgent : Color.popups.text
             wrapMode: Text.WordWrap; elide: Text.ElideNone
-            font.pixelSize: Style.font.bodySmall
+            font.pixelSize: Style.font.body
         }
         Action { fontFamily: root.fontFamily;
             objectName: "retrySync"
@@ -172,7 +172,7 @@ FocusScope {
         width: parent.width
         height: visible ? Style.space(34) : 0
         visible: root.selectedIds.length > 0 && !root.setupVisible
-        Label { font.family: root.fontFamily; Layout.fillWidth: true; text: root.selectedIds.length + " selected"; color: Color.accent; font.pixelSize: Style.font.bodySmall }
+        Label { font.family: root.fontFamily; Layout.fillWidth: true; text: root.selectedIds.length + " selected"; color: Color.accent; font.pixelSize: Style.font.body }
         Action { fontFamily: root.fontFamily;
             text: "Actions…"; objectName: "selectionActions"; enabled: !root.service.saving
             onClicked: {

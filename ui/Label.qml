@@ -4,7 +4,7 @@ import qs.Commons
 Text {
     color: Color.popups.text
     font.family: Qt.application.font.family
-    font.pixelSize: Style.font.body
+    font.pixelSize: Style.font.subtitle
     textFormat: Text.PlainText
     renderType: Text.NativeRendering
     elide: Text.ElideRight

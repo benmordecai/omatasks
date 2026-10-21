@@ -17,7 +17,7 @@ C.ToolTip {
         id: preview
         text: root.text; textFormat: Text.PlainText
         color: Color.tooltip.text
-        font.family: root.fontFamily; font.pixelSize: Style.font.bodySmall
+        font.family: root.fontFamily; font.pixelSize: Style.font.body
         wrapMode: Text.Wrap; maximumLineCount: 8; elide: Text.ElideRight
     }
 }

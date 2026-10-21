@@ -19,7 +19,7 @@ C.AbstractButton {
             width: Style.space(16); height: width; radius: width / 2
             border.width: Style.space(1.5); border.color: root.priorityColor
             color: root.hovered || root.activeFocus ? Qt.rgba(root.priorityColor.r, root.priorityColor.g, root.priorityColor.b, 0.15) : "transparent"
-            Label { font.family: root.fontFamily; anchors.centerIn: parent; text: "✓"; visible: root.hovered || root.activeFocus; font.pixelSize: Style.font.caption; color: root.priorityColor }
+            Label { font.family: root.fontFamily; anchors.centerIn: parent; text: "✓"; visible: root.hovered || root.activeFocus; font.pixelSize: Style.font.bodySmall; color: root.priorityColor }
         }
     }
 }

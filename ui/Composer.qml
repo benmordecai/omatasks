@@ -245,7 +245,7 @@ ColumnLayout {
         implicitHeight: Math.max(Style.space(30), contentHeight)
         multiline: true; framed: false
         foreground: Color.popups.text
-        font.family: root.fontFamily; font.pixelSize: Style.font.body; font.bold: true
+        font.family: root.fontFamily; font.pixelSize: Style.font.subtitle; font.bold: true
         placeholderText: "Task name"; placeholderTextColor: Qt.rgba(Color.popups.text.r, Color.popups.text.g, Color.popups.text.b, 0.4)
         // Only the recognized spans' backgrounds are drawn, under the text.
         Repeater {
@@ -286,7 +286,7 @@ ColumnLayout {
             objectName: "taskDescription"
             multiline: true; framed: false
             foreground: Color.popups.text
-            font.family: root.fontFamily; font.pixelSize: Style.font.bodySmall
+            font.family: root.fontFamily; font.pixelSize: Style.font.body
             placeholderText: "Description"; placeholderTextColor: Qt.rgba(Color.popups.text.r, Color.popups.text.g, Color.popups.text.b, 0.4)
             enabled: !root.submitting
             // Keep the caret in view as it moves past the visible lines.
@@ -341,7 +341,7 @@ ColumnLayout {
             KeyField { id: durationField; font.family: root.fontFamily; objectName: "taskDuration"; Layout.preferredWidth: Style.space(60); text: root.duration; maximumLength: 6; validator: function(value) { return /^\d*$/.test(value) && Number(value) <= 100000; } onTextEdited: root.duration = text; enabled: !root.submitting }
             UI.Dropdown { fontFamily: root.fontFamily; Layout.preferredWidth: Style.space(95); showLabel: false; value: root.durationUnit; options: [{value: "minute", label: "Minutes"}, {value: "day", label: "Days"}]; onChanged: function(value) { root.durationUnit = value; } enabled: !root.submitting }
         }
-        Label { font.family: root.fontFamily; text: "0 = no duration"; opacity: 0.45; font.pixelSize: Style.font.caption }
+        Label { font.family: root.fontFamily; text: "0 = no duration"; opacity: 0.45; font.pixelSize: Style.font.bodySmall }
         Repeater {
             model: root.existingReminders
             Chip { fontFamily: root.fontFamily; required property var modelData; text: Edit.reminderText(modelData); iconName: "bell"; maximumWidth: root.width; removable: !modelData.notify_uid || String(modelData.notify_uid) === String(root.service.user.id); enabled: !root.submitting; onClicked: if (removable) { root.replacingReminder = String(modelData.id); root.openPicker("reminder"); } onRemoved: root.removedReminders = root.removedReminders.concat([String(modelData.id)]) }
@@ -360,7 +360,7 @@ ColumnLayout {
             spacing: Style.space(6)
             RowLayout {
                 Layout.fillWidth: true
-                Label { font.family: root.fontFamily; Layout.fillWidth: true; text: ({project: "Project", label: "Labels", section: "Section", priority: "Priority", due: "Date", deadline: "Deadline", reminder: "Reminder", assignee: "Assignee"})[root.pickerKind] || ""; font.bold: true; font.pixelSize: Style.font.bodySmall }
+                Label { font.family: root.fontFamily; Layout.fillWidth: true; text: ({project: "Project", label: "Labels", section: "Section", priority: "Priority", due: "Date", deadline: "Deadline", reminder: "Reminder", assignee: "Assignee"})[root.pickerKind] || ""; font.bold: true; font.pixelSize: Style.font.body }
                 Action { fontFamily: root.fontFamily; iconName: "close"; iconSize: Style.space(12); tip: "Close picker"; onClicked: { root.closePicker(); root.focusInput(); } }
             }
             KeyField { font.family: root.fontFamily;
@@ -391,15 +391,15 @@ ColumnLayout {
                         spacing: Style.space(8)
                         ViewIcon { visible: !!option.modelData.icon; name: option.modelData.icon || ""; color: root.pickerKind === "priority" ? root.priorityColor(option.modelData.value) : option.modelData.color || Color.popups.text }
                         Label { font.family: root.fontFamily; visible: !!option.modelData.prefix; text: option.modelData.prefix || ""; opacity: 0.6 }
-                        Label { font.family: root.fontFamily; Layout.fillWidth: true; text: option.modelData.label; font.pixelSize: Style.font.bodySmall }
-                        Label { font.family: root.fontFamily; Layout.maximumWidth: parent.width * 0.35; text: option.modelData.detail || ""; opacity: 0.4; font.pixelSize: Style.font.caption }
+                        Label { font.family: root.fontFamily; Layout.fillWidth: true; text: option.modelData.label; font.pixelSize: Style.font.body }
+                        Label { font.family: root.fontFamily; Layout.maximumWidth: parent.width * 0.35; text: option.modelData.detail || ""; opacity: 0.4; font.pixelSize: Style.font.bodySmall }
                     }
                     background: Rectangle { radius: Style.cornerRadius; color: option.hovered || root.choiceIndex === option.index ? Style.hoverFillFor(Color.popups.text, Color.accent) : "transparent" }
                     onClicked: root.choose(modelData)
                 }
             }
             Label { font.family: root.fontFamily; visible: root.choices.length === 0; Layout.fillWidth: true; text: root.pickerKind === "section" && !root.shownProject ? "Choose a project first." : root.pickerKind === "assignee" && (!root.shownProject || !root.shownProject.is_shared) ? "Choose a shared project first." : "No matches"; opacity: 0.5; wrapMode: Text.WordWrap }
-            Label { font.family: root.fontFamily; visible: root.pickerKind === "reminder"; Layout.fillWidth: true; text: "Before-task reminders need a task time. Availability follows your Todoist plan."; font.pixelSize: Style.font.caption; opacity: 0.5; wrapMode: Text.WordWrap; elide: Text.ElideNone }
+            Label { font.family: root.fontFamily; visible: root.pickerKind === "reminder"; Layout.fillWidth: true; text: "Before-task reminders need a task time. Availability follows your Todoist plan."; font.pixelSize: Style.font.bodySmall; opacity: 0.5; wrapMode: Text.WordWrap; elide: Text.ElideNone }
         }
     }
     Rectangle { Layout.fillWidth: true; height: 1; color: Color.popups.text; opacity: 0.12 }
