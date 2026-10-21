@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui as UI
 
 ColumnLayout {
@@ -39,7 +40,7 @@ ColumnLayout {
         }
         Label { font.family: root.fontFamily; Layout.fillWidth: true; text: root.service.barMode === "next" ? "Today’s next timed task, or today’s count when none is left." : "A timed task appears 15 minutes before its time and stays until it ends, or for 30 minutes without a duration. Otherwise the bar shows today’s count."; font.pixelSize: Style.font.bodySmall; opacity: 0.5; wrapMode: Text.WordWrap; elide: Text.ElideNone; visible: root.service.barMode === "soon" || root.service.barMode === "next" }
     }
-    Rectangle { visible: root.service.configured; Layout.fillWidth: true; height: 1; color: Color.popups.text; opacity: 0.12 }
+    Rectangle { visible: root.service.configured; Layout.fillWidth: true; height: 1; color: Commons.Color.popups.text; opacity: 0.12 }
     ColumnLayout {
         id: notifications
         visible: root.service.configured
@@ -70,7 +71,7 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     objectName: "notify-" + modelData.key
                     checked: notifications.options[modelData.key]
-                    foreground: Color.popups.text
+                    foreground: Commons.Color.popups.text
                     Accessible.name: modelData.label
                     onToggled: root.service.setNotification(modelData.key, !checked)
                 }
@@ -97,7 +98,7 @@ ColumnLayout {
                 onClicked: apply()
             }
         }
-        Label { font.family: root.fontFamily; Layout.fillWidth: true; visible: text !== ""; text: recapApply.message; color: Color.urgent; wrapMode: Text.WordWrap; elide: Text.ElideNone; font.pixelSize: Style.font.bodySmall }
+        Label { font.family: root.fontFamily; Layout.fillWidth: true; visible: text !== ""; text: recapApply.message; color: Commons.Color.urgent; wrapMode: Text.WordWrap; elide: Text.ElideNone; font.pixelSize: Style.font.bodySmall }
         RowLayout {
             Layout.fillWidth: true
             enabled: notifications.options.enabled
@@ -118,9 +119,9 @@ ColumnLayout {
             onClicked: root.service.notifyRecap(true)
         }
     }
-    Rectangle { visible: root.service.configured; Layout.fillWidth: true; height: 1; color: Color.popups.text; opacity: 0.12 }
+    Rectangle { visible: root.service.configured; Layout.fillWidth: true; height: 1; color: Commons.Color.popups.text; opacity: 0.12 }
     Setup { Layout.fillWidth: true; service: root.service }
-    Rectangle { Layout.fillWidth: true; height: 1; color: Color.popups.text; opacity: 0.12 }
+    Rectangle { Layout.fillWidth: true; height: 1; color: Commons.Color.popups.text; opacity: 0.12 }
     ColumnLayout {
         Layout.fillWidth: true
         spacing: Style.space(8)
@@ -144,7 +145,7 @@ ColumnLayout {
             Layout.fillWidth: true
             visible: text !== ""
             text: root.service.shortcut.message
-            color: root.service.shortcut.successful ? Color.popups.text : Color.urgent
+            color: root.service.shortcut.successful ? Commons.Color.popups.text : Commons.Color.urgent
             opacity: 0.7; wrapMode: Text.WordWrap; elide: Text.ElideNone; font.pixelSize: Style.font.bodySmall
         }
     }
