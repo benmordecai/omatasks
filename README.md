@@ -4,7 +4,7 @@ Your Todoist day in the Omarchy bar, with a native Quick Add a shortcut away.
 
 ![OmaTasks for Todoist: the Today panel and Quick Add](preview.png)
 
-**Today · Inbox · Upcoming · Quick Add · Edit · Multi-select · Drag to reorder**
+**Today · Inbox · Upcoming · Quick Add · Edit · Multi-select · Drag to reorder · Notifications**
 
 A compact list that puts your tasks first. Open the bar panel to plan your day,
 complete a task, or change its details. Press **Alt+Space** to capture something
@@ -26,8 +26,10 @@ omarchy plugin add https://github.com/crmne/omatasks.git --enable
 
 No extra packages or Todoist CLI are required. The runtime uses QML's HTTPS
 client; Hyprland manages the shortcut, standard shell utilities save your
-local settings, and `wl-paste` (wl-clipboard, included in Omarchy) reads the
-clipboard when you paste. Node.js is only used for development tests.
+local settings, `wl-paste` (wl-clipboard, included in Omarchy) reads the
+clipboard when you paste, and the system Python with `python-gobject`, also
+included in Omarchy, sends notifications. Node.js is only used for development
+tests.
 
 ## Connect
 
@@ -37,7 +39,7 @@ Click the **Todoist icon** in the bar. Setup appears **inside that panel**:
 2. Copy your API token. The panel links directly to [Developer settings](https://app.todoist.com/app/settings/integrations/developer).
 3. Paste the token into the password field with **Ctrl+V** and select **Connect**.
 
-The token is validated before being saved. It lives in `$XDG_CONFIG_HOME/omarchy-todoist/token` (normally `~/.config/omarchy-todoist/token`) with mode `0600`, inside a `0700` directory. It is sent to the credential writer through stdin and to Todoist through an HTTPS authorization header. It is never stored in `shell.json`, command arguments, or this repository. Display preferences are stored in `views.json` beside it. Task data stays in memory.
+The token is validated before being saved. It lives in `$XDG_CONFIG_HOME/omarchy-todoist/token` (normally `~/.config/omarchy-todoist/token`) with mode `0600`, inside a `0700` directory. It is sent to the credential writer through stdin and to Todoist through an HTTPS authorization header. It is never stored in `shell.json`, command arguments, or this repository. Display and notification preferences are stored in `views.json` beside it. Task data stays in memory.
 
 Temporary sync failures retry automatically after 5 seconds, with increasing delays up to five minutes. Cached tasks stay visible and your account stays connected. Use **Retry now** in the error banner to try immediately; Todoist rate limits still apply. Failed task changes retain their existing explicit retry behavior.
 
@@ -137,6 +139,39 @@ Screenshots use sample tasks. Panel size defaults to **420 × 560px** and is
 adjustable in Settings; shorter lists shrink to fit.
 
 Only the active-task list is implemented. Calendar, board, completed-task history, and comment editing are outside this version.
+
+## Notifications
+
+OmaTasks announces your tasks on the desktop from the tasks it already syncs,
+so notifications need no extra requests to Todoist. Choose what you get under
+**Settings → Notifications**.
+
+- **Reminders.** The reminders set on a task in Todoist, before its time or at
+  a fixed time. Reminders marked urgent stay on screen until dismissed.
+  Location reminders are left to Todoist's mobile apps.
+- **At each task's time.** A task with a time is announced when it is due,
+  even without a reminder. A reminder at the same moment is shown once.
+- **Morning recap.** At 08:00, or the time you set, one notification lists
+  today's tasks in Smart order, how many are overdue, and deadlines in the
+  next three days. If you are away from the computer, or it is off, the recap
+  waits until you are back. **Show the recap now** sends it immediately.
+- **Deadline warnings.** At recap time, a deadline tomorrow gets its own
+  notification, and a deadline today gets one that stays on screen until
+  dismissed.
+- **Repeat overdue tasks.** Off by default. Choose every 1, 2, or 4 hours to
+  be reminded again about a timed task that is still open on the day it was
+  due.
+
+Task notifications have **Complete**, **Snooze 15 min**, and **Open** (the
+panel) buttons. Snoozes last until the shell restarts. Only your own and
+unassigned tasks are announced. Reminders that came due more than ten minutes
+before you were at the computer, or before the shell started, are not
+replayed.
+
+Notifications are sent over D-Bus by `Notifier.py`. Task names reach it through
+its standard input, never its command line. It records what it has shown
+in `$XDG_RUNTIME_DIR/omatasks`, so reloading the shell does not repeat this
+morning's recap, and clears those records after two days.
 
 ## Remove
 

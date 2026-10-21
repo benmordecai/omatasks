@@ -16,6 +16,7 @@ ShellRoot {
     Plugin.Service {
         id: service
         enableShortcuts: false
+        enableNotifications: false
         stateDir: Quickshell.env("TODOIST_TEST_DIR") + "/state"
         property var captured: []
         function applyToken(value) {}
@@ -221,6 +222,13 @@ ShellRoot {
             sizeControl.saved = 700; compare(sizeControl.value, 700, "value still follows the saved size"); compare(field.text, "700");
             keyClick(Qt.Key_A, Qt.ControlModifier); type("5000"); keyClick(Qt.Key_Return); compare(sizeControl.value, 1000);
             sizeControl.parent.visible = false;
+        }
+        function test_notification_settings_toggle_and_save() {
+            service.preferences = {}; settings.visible = true; composer.visible = false;
+            var atTime = findChild(settings, "notify-atDueTime"); verify(atTime !== null); verify(atTime.checked);
+            atTime.toggled(); verify(!service.notifySettings.atDueTime); verify(!atTime.checked);
+            findChild(settings, "notify-enabled").toggled(); verify(!service.notifySettings.enabled); verify(!atTime.parent.enabled);
+            settings.visible = false; composer.visible = true; service.preferences = {};
         }
         function test_no_qt_text_input_is_instantiated() {
             var found = [];

@@ -11,6 +11,7 @@ ShellRoot {
     Plugin.Service {
         id: service
         enableShortcuts: false
+        enableNotifications: false
         stateDir: Quickshell.env("TODOIST_PREVIEW_DIR") + "/state"
         function applyToken(value) {}
         function refresh() {}

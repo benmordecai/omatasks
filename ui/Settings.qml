@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
+import qs.Ui as UI
 
 ColumnLayout {
     id: root
@@ -23,6 +24,85 @@ ColumnLayout {
             SizeControl { font.family: root.fontFamily; value: root.service.panelHeight; from: 280; to: 1200; Accessible.name: "Maximum panel height"; onValueModified: root.service.setPanelSize("panelHeight", value) }
         }
         Label { font.family: root.fontFamily; Layout.fillWidth: true; text: "Pixels. The panel shrinks to fit shorter lists."; font.pixelSize: Style.font.bodySmall; opacity: 0.5; wrapMode: Text.WordWrap; elide: Text.ElideNone }
+    }
+    Rectangle { visible: root.service.configured; Layout.fillWidth: true; height: 1; color: Color.popups.text; opacity: 0.12 }
+    ColumnLayout {
+        id: notifications
+        visible: root.service.configured
+        Layout.fillWidth: true
+        spacing: Style.space(8)
+        readonly property var options: root.service.notifySettings
+        Label { font.family: root.fontFamily; text: "Notifications"; font.bold: true }
+        Repeater {
+            model: [
+                {key: "enabled", label: "Show notifications", detail: "Your Todoist reminders, with Complete and Snooze buttons."},
+                {key: "atDueTime", label: "At each task’s time", detail: "Even when the task has no reminder."},
+                {key: "deadlines", label: "Deadline warnings", detail: "The day before a deadline and on the day, at recap time."},
+                {key: "recap", label: "Morning recap", detail: "Today’s tasks and the next 3 days’ deadlines, once you are at the computer."}
+            ]
+            RowLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                enabled: modelData.key === "enabled" || notifications.options.enabled
+                opacity: enabled ? 1 : 0.4
+                spacing: Style.space(10)
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: Style.space(2)
+                    Label { font.family: root.fontFamily; Layout.fillWidth: true; text: modelData.label }
+                    Label { font.family: root.fontFamily; Layout.fillWidth: true; text: modelData.detail; opacity: 0.5; wrapMode: Text.WordWrap; elide: Text.ElideNone; font.pixelSize: Style.font.bodySmall }
+                }
+                UI.ToggleSwitch {
+                    Layout.alignment: Qt.AlignVCenter
+                    objectName: "notify-" + modelData.key
+                    checked: notifications.options[modelData.key]
+                    foreground: Color.popups.text
+                    Accessible.name: modelData.label
+                    onToggled: root.service.setNotification(modelData.key, !checked)
+                }
+            }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            enabled: notifications.options.enabled && notifications.options.recap
+            opacity: enabled ? 1 : 0.4
+            Label { font.family: root.fontFamily; Layout.fillWidth: true; text: "Recap time" }
+            KeyField { font.family: root.fontFamily;
+                id: recapInput
+                Layout.preferredWidth: Style.space(70)
+                text: notifications.options.recapTime
+                placeholderText: "08:00"
+                onAccepted: recapApply.apply()
+                Connections { target: root.service; function onPreferencesChanged() { recapInput.text = root.service.notifySettings.recapTime; } }
+            }
+            Action { fontFamily: root.fontFamily;
+                id: recapApply
+                property string message: ""
+                text: "Apply"; bordered: true
+                function apply() { message = root.service.setNotification("recapTime", recapInput.text) ? "" : "Use a 24-hour time, such as 08:00."; }
+                onClicked: apply()
+            }
+        }
+        Label { font.family: root.fontFamily; Layout.fillWidth: true; visible: text !== ""; text: recapApply.message; color: Color.urgent; wrapMode: Text.WordWrap; elide: Text.ElideNone; font.pixelSize: Style.font.bodySmall }
+        RowLayout {
+            Layout.fillWidth: true
+            enabled: notifications.options.enabled
+            opacity: enabled ? 1 : 0.4
+            Label { font.family: root.fontFamily; Layout.fillWidth: true; text: "Repeat overdue tasks" }
+            UI.Dropdown {
+                Layout.preferredWidth: Style.space(150)
+                showLabel: false; fontFamily: root.fontFamily
+                value: String(notifications.options.overdueHours)
+                options: [{value: "0", label: "Never"}, {value: "1", label: "Every hour"}, {value: "2", label: "Every 2 hours"}, {value: "4", label: "Every 4 hours"}]
+                onChanged: function(value) { root.service.setNotification("overdueHours", Number(value)); }
+            }
+        }
+        Label { font.family: root.fontFamily; Layout.fillWidth: true; text: "Reminds you again about timed tasks still open on the day they were due."; opacity: 0.5; wrapMode: Text.WordWrap; elide: Text.ElideNone; font.pixelSize: Style.font.bodySmall; visible: notifications.options.enabled }
+        Action { fontFamily: root.fontFamily;
+            text: "Show the recap now"; leftAligned: true
+            enabled: notifications.options.enabled && root.service.loaded
+            onClicked: root.service.notifyRecap(true)
+        }
     }
     Rectangle { visible: root.service.configured; Layout.fillWidth: true; height: 1; color: Color.popups.text; opacity: 0.12 }
     Setup { Layout.fillWidth: true; service: root.service }

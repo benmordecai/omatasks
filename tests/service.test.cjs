@@ -29,6 +29,11 @@ function service() {
     vm.runInContext(fs.readFileSync('ui/BulkModel.js', 'utf8').replace(/^\.import.*$/gm, ''), Bulk);
     const ctx = vm.createContext({ Order, preferences: {}, now: new Date(2026, 8, 15, 12), pendingReorder: null, reorderCache: {}, settingsFile: { setText() {} }, Model, XMLHttpRequest: XHR, Date, requests: [], completionIds: {}, generation: 0, token: 'test-token', configured: true, loading: false, saving: false, connecting: false, storageReady: true, error: '', retryAfter: 0, nextSyncRetry: 0, syncFailures: 0, syncToken: '*', tasks: [], projects: [], sections: [], labels: [], collaborators: [], reminders: [], completedInfo: [], user: {}, lastSync: 0, taskAdded() { ctx.added = true; }, taskUpdated(id) { ctx.updated = id; }, taskCompleted(id) { ctx.completed = id; }, operationFailed(message) { ctx.failed = message; } });
     ctx.root = ctx;
+    const Notify = vm.createContext({ Model, Date });
+    vm.runInContext(fs.readFileSync('ui/NotifyModel.js', 'utf8').replace(/^\.import.*$/gm, ''), Notify);
+    ctx.sent = [];
+    Object.assign(ctx, { Notify, notifySettings: Notify.settings({}), notifying: true, loaded: true, startedAt: 0, shownAlerts: {}, snoozed: {}, projectMap: {}, sectionMap: {},
+        notifier: { running: true, write(line) { ctx.sent.push(JSON.parse(line)); } } });
     ctx.Bulk = Bulk; ctx.bulkRetry = null; ctx.taskActionFinished = () => { ctx.bulkFinished = true; };
     const source = fs.readFileSync('Service.qml', 'utf8');
     const functions = [...source.matchAll(/^    function .+?\{[\s\S]*?^    \}/gm)].map(m => m[0]).join('\n');
@@ -323,4 +328,52 @@ test('Authorization failures do not schedule transient retries; malformed sync r
     assert.ok(s.nextSyncRetry > Date.now());
     s.refresh(true); wires[2].respond(200, {});
     assert.equal(s.syncFailures, 2);
+});
+
+test('Due tasks are sent to the notifier once, with Complete and Snooze', () => {
+    const {s} = service();
+    const due = new Date(Date.now() - 60000);
+    const local = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:00`;
+    s.user = {id: 'me'};
+    s.tasks = [{id: 't1', content: 'Call **Ana**', project_id: 'p', priority: 1, due: {date: local(due)}}];
+    s.notifySettings = s.Notify.settings({notifications: {recap: false, deadlines: false}});
+    s.checkNotifications(false);
+    s.checkNotifications(false);
+    assert.equal(s.sent.length, 1);
+    assert.equal(s.sent[0].id, 'task:t1');
+    assert.equal(s.sent[0].title, 'Call Ana');
+    assert.deepEqual(s.sent[0].actions.map(a => a[0]), ['default', 'complete', 'snooze']);
+});
+test('The recap waits while you are away and is sent once a day', () => {
+    const {s} = service();
+    s.user = {id: 'me'};
+    s.notifySettings = s.Notify.settings({notifications: {recapTime: '00:00'}});
+    s.checkNotifications(true);
+    assert.equal(s.sent.length, 0);
+    s.checkNotifications(false);
+    s.checkNotifications(false);
+    assert.deepEqual(s.sent.map(r => [r.id, r.title, r.marker.startsWith('recap-')]), [['recap', 'Nothing due today', true]]);
+    s.notifyRecap(true);
+    assert.equal(s.sent[1].marker, '');
+});
+test('Notification buttons complete, snooze, or open the panel', () => {
+    const {s, wires} = service();
+    s.tasks = [{id: 't1', content: 'Call', project_id: 'p', priority: 1}];
+    s.answerNotification(JSON.stringify({id: 'task:t1', action: 'snooze'}));
+    assert.ok(s.snoozed.t1 > Date.now() + 14 * 60000);
+    s.answerNotification(JSON.stringify({id: 'task:t1', action: 'complete'}));
+    assert.match(wires.at(-1).url, /\/tasks\/t1\/close$/);
+    s.openPanel = () => { s.panelOpened = true; };
+    s.answerNotification(JSON.stringify({id: 'recap', action: 'default'}));
+    assert.equal(s.panelOpened, true);
+    s.answerNotification('not json');
+});
+test('Notification settings are saved with the view preferences', () => {
+    const {s} = service();
+    assert.equal(s.setNotification('recapTime', '7:30'), true);
+    assert.equal(s.preferences.notifications.recapTime, '07:30');
+    assert.equal(s.setNotification('recapTime', 'later'), false);
+    assert.equal(s.setNotification('unknown', true), false);
+    assert.equal(s.setNotification('overdueHours', 2), true);
+    assert.equal(s.Notify.settings(s.preferences).overdueHours, 2);
 });
